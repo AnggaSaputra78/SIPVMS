@@ -4,266 +4,299 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 
+// ============ DEPENDENSI ============
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
+// =====================================
+
 dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// CORS Configuration
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:3000', 'http://127.0.0.1:5000', 'http://sipvms.merak.web.id', '*'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+}));
+
+// Static files
 app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // ============ KONEKSI MONGODB ============
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/suratDB';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://192.168.20.217:27017/suratDB';
 
 console.log('═══════════════════════════════════════════════════════════');
 console.log('🔄 Menghubungkan ke MongoDB...');
 console.log(`📡 URL: ${MONGODB_URI}`);
 console.log('═══════════════════════════════════════════════════════════');
 
-mongoose.connect(MONGODB_URI)
-  .then(() => {
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 45000
+})
+  .then(async () => {
     console.log('✅ MongoDB Connected Successfully!');
     console.log(`📁 Database Name: ${mongoose.connection.name}`);
     console.log(`🔌 Host: ${mongoose.connection.host}`);
     console.log('═══════════════════════════════════════════════════════════');
+    
+    // Auto-seed default admin user saat server nyala
+    await seedDefaultUser();
   })
   .catch(err => {
     console.error('❌ MongoDB Connection Error:', err.message);
   });
 
-// ============ MODEL SURAT ============
-const suratSchema = new mongoose.Schema({
-  nomor_surat: { type: String, required: true },
-  jenis_surat: { type: String, required: true },
-  nama_pemohon: { type: String, required: true },
-  tanggal_surat: { type: Date, required: true },
-  isi_surat: { type: String, required: true },
-  status_validasi: { type: String, enum: ['Pending', 'Valid', 'Rejected'], default: 'Pending' },
-  catatan_validasi: { type: String, default: '' },
-  tanggal_validasi: { type: Date },
-  validator_name: { type: String, default: '' },
+// ============ MODEL USER ============
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: false, unique: true, sparse: true, lowercase: true, trim: true },
+  email:    { type: String, required: false, unique: true, sparse: true, lowercase: true, trim: true },
+  password: { type: String, required: true },
+  nama_lengkap: { type: String, default: '' },
+  role: { type: String, enum: ['admin', 'user', 'validator'], default: 'user' },
   created_at: { type: Date, default: Date.now }
 });
 
+userSchema.index({ username: 1, email: 1 });
+const User = mongoose.model('User', userSchema);
+
+// ============ MODEL SURAT ============
+const suratSchema = new mongoose.Schema({
+  nomor_surat: { type: String, required: true, index: true },
+  jenis_surat: { type: String, required: true, index: true },
+  nama_pemohon: { type: String, required: true, index: true },
+  tanggal_surat: { type: Date, required: true },
+  isi_surat: { type: String, required: true },
+  status_validasi: { type: String, enum: ['Pending', 'Valid', 'Rejected'], default: 'Pending', index: true },
+  catatan_validasi: { type: String, default: '' },
+  tanggal_validasi: { type: Date },
+  validator_name: { type: String, default: '' },
+  metadata: { type: Map, of: String, default: {} },
+  nik: { type: String, default: '', index: true },
+  tempat_lahir: { type: String, default: '' },
+  tgl_lahir: { type: Date },
+  jenis_kelamin: { type: String, default: '' },
+  pekerjaan: { type: String, default: '' },
+  alamat: { type: String, default: '' },
+  no_kk: { type: String, default: '' },
+  keperluan: { type: String, default: '' },
+  tempat_usaha: { type: String, default: '' },
+  jenis_usaha: { type: String, default: '' },
+  status_usaha: { type: String, default: '' },
+  tahun_mulai_usaha: { type: String, default: '' },
+  instansi_tujuan: { type: String, default: '' },
+  perihal: { type: String, default: '' },
+  sifat_surat: { type: String, default: '' },
+  lampiran: { type: String, default: '' },
+  isi_permohonan: { type: String, default: '' },
+  lokasi_objek: { type: String, default: '' },
+  alasan_dispensasi: { type: String, default: '' },
+  tgl_mulai_dispensasi: { type: Date },
+  tgl_selesai_dispensasi: { type: Date },
+  created_at: { type: Date, default: Date.now, index: true },
+  updated_at: { type: Date, default: Date.now }
+});
+
+suratSchema.pre('save', function(next) {
+  this.updated_at = Date.now();
+  next();
+});
 const Surat = mongoose.model('Surat', suratSchema);
 
-// ============ ROUTES API ============
+// ============ FUNGSI BUAT USER DEFAULT (PENTING!) ============
+async function seedDefaultUser() {
+  try {
+    // Cek apakah user 'admin' sudah ada
+    const existingAdmin = await User.findOne({ username: 'admin' });
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash('admin123', 12);
+      const adminUser = new User({
+        username: 'admin',
+        email: 'admin@sipvms.local',
+        password: hashedPassword,
+        nama_lengkap: 'Administrator',
+        role: 'admin'
+      });
+      await adminUser.save();
+      console.log('✅ User default dibuat: Username: admin | Password: admin123');
+    } else {
+      console.log('ℹ️  User admin sudah ada.');
+    }
+  } catch (err) {
+    console.error('❌ Error seed user:', err.message);
+  }
+}
 
-// GET ALL SURAT
+// ============ MIDDLEWARE AUTH ============
+const authMiddleware = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'Token tidak ditemukan' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'sipvms_super_secret_key_2024');
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) throw new Error('User tidak ditemukan');
+    req.user = user;
+    next();
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Token tidak valid' });
+  }
+};
+
+// ============ ROUTES AUTH ============
+
+// Register
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, email, password, nama_lengkap } = req.body;
+    if ((!username && !email) || !password) {
+      return res.status(400).json({ success: false, message: 'Username/email dan password wajib diisi' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password minimal 6 karakter' });
+    }
+
+    const existingUser = await User.findOne({ $or: [{ email: email?.toLowerCase() }, { username: username?.toLowerCase() }] });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Username atau email sudah terdaftar' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const userData = { password: hashedPassword, nama_lengkap: nama_lengkap || '' };
+    
+    if (username) {
+      userData.username = username.toLowerCase().trim();
+      userData.email = email?.toLowerCase().trim() || `${username.toLowerCase().trim()}@sipvms.local`;
+    } else if (email) {
+      userData.email = email.toLowerCase().trim();
+      userData.username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30);
+    }
+
+    const newUser = new User(userData);
+    await newUser.save();
+    res.status(201).json({ success: true, message: 'Registrasi berhasil' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server' });
+  }
+});
+
+// Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    if (!password || (!username && !email)) {
+      return res.status(400).json({ success: false, message: 'Lengkapi data login' });
+    }
+
+    const searchValue = (username || email)?.toLowerCase().trim();
+    const user = await User.findOne({ $or: [{ username: searchValue }, { email: searchValue }] });
+    
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Username/email atau password salah' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Username/email atau password salah' });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, username: user.username, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'sipvms_super_secret_key_2024',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Login berhasil',
+      token,
+      user: { id: user._id, username: user.username, email: user.email, nama_lengkap: user.nama_lengkap, role: user.role }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server' });
+  }
+});
+
+// ============ ROUTES SURAT ============
 app.get('/api/surat/all', async (req, res) => {
   try {
-    const surat = await Surat.find().sort({ created_at: -1 });
-    console.log(`📋 Mengambil ${surat.length} surat dari database`);
+    const surat = await Surat.find().sort({ created_at: -1 }).limit(1000);
     res.json({ success: true, data: surat });
   } catch (error) {
-    console.error('Error mengambil surat:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// CREATE SURAT
 app.post('/api/surat/create', async (req, res) => {
   try {
-    const { nomor_surat, jenis_surat, nama_pemohon, tanggal_surat, isi_surat } = req.body;
-    
-    const newSurat = new Surat({
-      nomor_surat,
-      jenis_surat,
-      nama_pemohon,
-      tanggal_surat,
-      isi_surat,
-      status_validasi: 'Pending'
-    });
-    
-    const savedSurat = await newSurat.save();
-    console.log('✅ Surat berhasil dibuat:', savedSurat._id);
-    res.json({ success: true, data: savedSurat });
+    const { nomor_surat, jenis_surat, nama_pemohon, tanggal_surat, isi_surat, metadata, ...otherFields } = req.body;
+    if (!nomor_surat || !jenis_surat || !nama_pemohon || !tanggal_surat) {
+      return res.status(400).json({ success: false, message: 'Data wajib tidak lengkap' });
+    }
+    const newSurat = new Surat({ nomor_surat, jenis_surat, nama_pemohon, tanggal_surat, isi_surat, metadata, ...otherFields });
+    await newSurat.save();
+    res.json({ success: true, data: newSurat, message: 'Surat disimpan' });
   } catch (error) {
-    console.error('Error membuat surat:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// 🔥 PERBAIKAN UTAMA - UPDATE SURAT (Menggunakan PUT)
 app.put('/api/surat/update/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('📝 Update surat ID:', id);
-    console.log('📦 Data update:', req.body);
-    
-    // Validasi ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log('❌ ID tidak valid:', id);
-      return res.status(400).json({ success: false, message: 'ID surat tidak valid' });
-    }
-    
-    // Cari surat berdasarkan ID
-    const surat = await Surat.findById(id);
-    
-    if (!surat) {
-      console.log('❌ Surat tidak ditemukan dengan ID:', id);
-      return res.status(404).json({ success: false, message: 'Surat tidak ditemukan' });
-    }
-    
-    // Update data
-    const updateData = {};
-    if (req.body.nomor_surat !== undefined) updateData.nomor_surat = req.body.nomor_surat;
-    if (req.body.jenis_surat !== undefined) updateData.jenis_surat = req.body.jenis_surat;
-    if (req.body.nama_pemohon !== undefined) updateData.nama_pemohon = req.body.nama_pemohon;
-    if (req.body.tanggal_surat !== undefined) updateData.tanggal_surat = req.body.tanggal_surat;
-    if (req.body.isi_surat !== undefined) updateData.isi_surat = req.body.isi_surat;
-    if (req.body.status_validasi !== undefined) updateData.status_validasi = req.body.status_validasi;
-    if (req.body.catatan_validasi !== undefined) updateData.catatan_validasi = req.body.catatan_validasi;
-    if (req.body.tanggal_validasi !== undefined) updateData.tanggal_validasi = req.body.tanggal_validasi;
-    if (req.body.validator_name !== undefined) updateData.validator_name = req.body.validator_name;
-    
-    const updatedSurat = await Surat.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-    
-    console.log('✅ Surat berhasil diupdate. Status baru:', updatedSurat.status_validasi);
+    const updatedSurat = await Surat.findByIdAndUpdate(id, { ...req.body, updated_at: Date.now() }, { new: true });
+    if (!updatedSurat) return res.status(404).json({ success: false, message: 'Tidak ditemukan' });
     res.json({ success: true, data: updatedSurat });
-    
   } catch (error) {
-    console.error('Error update surat:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// DELETE SURAT
 app.delete('/api/surat/delete/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'ID surat tidak valid' });
-    }
-    
-    const deletedSurat = await Surat.findByIdAndDelete(id);
-    
-    if (!deletedSurat) {
-      return res.status(404).json({ success: false, message: 'Surat tidak ditemukan' });
-    }
-    
-    console.log('🗑️ Surat berhasil dihapus:', id);
-    res.json({ success: true, message: 'Surat berhasil dihapus' });
-    
+    await Surat.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Dihapus' });
   } catch (error) {
-    console.error('Error delete surat:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// VERIFY SURAT (untuk QR Code)
 app.get('/api/surat/verify', async (req, res) => {
   try {
-    const { id } = req.query;
-    console.log('🔍 Verifikasi surat dengan ID:', id);
-    
-    if (!id) {
-      return res.json({ success: false, valid: false, message: 'ID tidak ditemukan' });
-    }
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.json({ success: false, valid: false, message: 'ID tidak valid' });
-    }
-    
-    const surat = await Surat.findById(id);
-    
-    if (!surat) {
-      return res.json({ success: false, valid: false, message: 'TIDAK VALID', reason: 'Surat tidak ditemukan' });
-    }
-    
-    if (surat.status_validasi === 'Valid') {
-      return res.json({ 
-        success: true, 
-        valid: true, 
-        data: {
-          _id: surat._id,
-          nomor_surat: surat.nomor_surat,
-          jenis_surat: surat.jenis_surat,
-          nama_pemohon: surat.nama_pemohon,
-          tanggal_surat: surat.tanggal_surat,
-          isi_surat: surat.isi_surat,
-          status_validasi: surat.status_validasi,
-          validator_name: surat.validator_name,
-          tanggal_validasi: surat.tanggal_validasi
-        }
-      });
-    } else if (surat.status_validasi === 'Pending') {
-      return res.json({ 
-        success: true, 
-        valid: false, 
-        message: 'BELUM DIVALIDASI',
-        data: surat
-      });
-    } else if (surat.status_validasi === 'Rejected') {
-      return res.json({ 
-        success: true, 
-        valid: false, 
-        message: 'DITOLAK',
-        data: surat
-      });
-    }
-    
+    const surat = await Surat.findById(req.query.id);
+    if (!surat) return res.json({ success: false, valid: false, message: 'Tidak valid' });
+    res.json({ success: true, valid: surat.status_validasi === 'Valid', data: surat });
   } catch (error) {
-    console.error('Error verifikasi:', error);
-    res.status(500).json({ success: false, valid: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// ============ HALAMAN UTAMA ============
+// ============ SERVING FRONTEND ============
 app.get('/', (req, res) => {
   const indexPath = path.join(__dirname, 'views', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head><title>SIPVMS</title></head>
-      <body style="font-family: Arial; text-align: center; padding: 50px;">
-        <h1>🗂️ SIPVMS - Sistem Surat Desa</h1>
-        <p>File index.html tidak ditemukan. Pastikan file berada di folder <strong>src/views/</strong></p>
-        <p>API Server berjalan di port 3001</p>
-      </body>
-      </html>
-    `);
-  }
+  if (fs.existsSync(indexPath)) res.sendFile(indexPath);
+  else res.send('File index.html tidak ditemukan di folder views/');
 });
 
-// HALAMAN VERIFIKASI
 app.get('/verify', (req, res) => {
-  const verifyPath = path.join(__dirname, 'views', 'verify.html');
-  if (fs.existsSync(verifyPath)) {
-    res.sendFile(verifyPath);
-  } else {
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head><title>Verifikasi Surat</title></head>
-      <body>
-        <h1>Verifikasi Surat</h1>
-        <p>Halaman verifikasi tidak ditemukan.</p>
-      </body>
-      </html>
-    `);
-  }
+  res.sendFile(path.join(__dirname, 'views', 'verify.html')); // Pastikan file ini ada jika perlu
 });
 
 // ============ START SERVER ============
 const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => {
-  console.log('');
-  console.log('╔════════════════════════════════════════════════════════════════╗');
-  console.log('║   🚀 SIPVMS - Server Berhasil Dijalankan                           ║');
-  console.log(`║   📍 URL: http://localhost:${PORT}                                   ║`);
-  console.log(`║   📦 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Terhubung' : '❌ Tidak Terhubung'}                                    ║`);
-  console.log('╚════════════════════════════════════════════════════════════════╝');
-  console.log('');
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔑 LOGIN DEFAULT: username=admin, password=admin123`);
 });
