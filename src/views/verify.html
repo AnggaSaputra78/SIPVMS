@@ -20,7 +20,7 @@
             width: 50px;
             height: 50px;
             border: 4px solid #e2e8f0;
-            border-top: 4px solid #0EA5E9;
+            border-top: 4px solid #0077ff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto;
@@ -28,47 +28,56 @@
         .fade-in {
             animation: fadeIn 0.5s ease-out;
         }
-        .status-card {
-            transition: all 0.3s ease;
+        .logo-container {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
-        .status-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        .logo-tuban {
+            max-height: 100px;
+            width: auto;
+            object-fit: contain;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 min-h-screen">
-    <div class="container mx-auto px-4 py-8 md:py-16">
-        <div class="text-center mb-8 fade-in">
-            <div class="inline-block p-4 bg-white/10 backdrop-blur-sm rounded-2xl mb-4">
-                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden fade-in">
+            <!-- Header with Tuban Logo -->
+            <div class="bg-white border-b-4 border-blue-600 p-6 text-center">
+                <div class="mb-4 logo-container flex justify-center">
+                    <img src="/logo-tuban.png" alt="Logo Kabupaten Tuban" class="logo-tuban" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex'">
+                    <div id="logo-fallback" class="hidden w-24 h-24 mx-auto bg-blue-600 rounded-full items-center justify-center">
+                        <span class="text-white font-bold text-2xl">TBN</span>
+                    </div>
+                </div>
+                <h1 class="text-3xl font-bold text-blue-700 mb-1">SIPVMS</h1>
+                <p class="text-xs text-gray-600 uppercase tracking-wide">Sistem Informasi Surat Desa Pongpongan</p>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">VERIFIKASI KEASLIAN SURAT</h2>
+                    <p class="text-sm text-gray-600 mt-1">Kabupaten Tuban - Jawa Timur</p>
+                </div>
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Verifikasi Keaslian Surat</h1>
-            <p class="text-blue-200">SIPVMS - Sistem Informasi Surat Desa Pongpongan</p>
-        </div>
 
-        <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden fade-in">
             <!-- Loading State -->
             <div id="loading-state" class="p-12 text-center">
                 <div class="spinner"></div>
-                <p class="mt-4 text-gray-600 font-medium">Memverifikasi surat...</p>
-                <p class="text-sm text-gray-400 mt-2">Mohon tunggu sebentar</p>
+                <p class="mt-4 text-gray-700 font-medium">Memverifikasi surat...</p>
+                <p class="text-sm text-gray-500 mt-2">Mohon tunggu sebentar</p>
             </div>
 
             <!-- Valid State -->
             <div id="valid-state" class="hidden">
-                <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-8 text-white text-center">
-                    <svg class="w-20 h-20 mx-auto mb-3 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-green-50 border-b-2 border-green-500 p-6 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <h2 class="text-3xl font-bold">✅ SURAT VALID</h2>
-                    <p class="text-green-100 mt-2">Surat ini ASLI dan telah diverifikasi secara resmi</p>
+                    <h2 class="text-2xl font-bold text-green-700">SURAT VALID</h2>
+                    <p class="text-green-600 mt-1 text-sm">Surat ini ASLI dan telah diverifikasi secara resmi</p>
                 </div>
-                <div id="valid-content" class="p-6"></div>
+                <div id="valid-content" class="p-6 space-y-4">
+                    <!-- Content will be inserted here -->
+                </div>
                 <div class="px-6 pb-6">
-                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div class="bg-green-50 border border-green-300 rounded-lg p-4">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -81,21 +90,21 @@
 
             <!-- Pending State -->
             <div id="pending-state" class="hidden">
-                <div class="bg-gradient-to-r from-yellow-500 to-amber-600 p-8 text-white text-center">
-                    <svg class="w-20 h-20 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-yellow-50 border-b-2 border-yellow-500 p-6 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <h2 class="text-3xl font-bold">⏳ BELUM DIVALIDASI</h2>
-                    <p class="text-yellow-100 mt-2">Surat ini masih menunggu proses validasi</p>
+                    <h2 class="text-2xl font-bold text-yellow-700">BELUM DIVALIDASI</h2>
+                    <p class="text-yellow-600 mt-1 text-sm">Surat ini masih menunggu proses validasi</p>
                 </div>
                 <div class="p-6 text-center">
-                    <p class="text-gray-700">Surat ini sudah terdaftar dalam sistem namun belum melalui proses validasi resmi.</p>
-                    <div class="mt-4 p-4 bg-yellow-50 rounded-xl">
+                    <p class="text-gray-700 mb-4">Surat ini sudah terdaftar dalam sistem namun belum melalui proses validasi resmi.</p>
+                    <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                             </svg>
-                            <p class="text-sm text-yellow-800">⚠️ Surat ini belum dapat digunakan untuk keperluan resmi. Silakan hubungi kantor desa untuk proses validasi.</p>
+                            <p class="text-sm text-yellow-800">Surat ini belum dapat digunakan untuk keperluan resmi. Silakan hubungi kantor desa untuk proses validasi.</p>
                         </div>
                     </div>
                 </div>
@@ -103,21 +112,21 @@
 
             <!-- Rejected State -->
             <div id="rejected-state" class="hidden">
-                <div class="bg-gradient-to-r from-red-500 to-red-700 p-8 text-white text-center">
-                    <svg class="w-20 h-20 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-red-50 border-b-2 border-red-600 p-6 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
                     </svg>
-                    <h2 class="text-3xl font-bold">❌ SURAT DITOLAK</h2>
-                    <p class="text-red-100 mt-2">Surat ini telah ditolak dan tidak dapat digunakan</p>
+                    <h2 class="text-2xl font-bold text-red-700">SURAT DITOLAK</h2>
+                    <p class="text-red-600 mt-1 text-sm">Surat ini telah ditolak dan tidak dapat digunakan</p>
                 </div>
                 <div class="p-6 text-center">
-                    <p class="text-gray-700">Surat ini telah melalui proses validasi dan <strong class="text-red-600">DITOLAK</strong> oleh petugas desa.</p>
-                    <div class="mt-4 p-4 bg-red-50 rounded-xl">
+                    <p class="text-gray-700 mb-4">Surat ini telah melalui proses validasi dan <strong class="text-red-600">DITOLAK</strong> oleh petugas desa.</p>
+                    <div class="bg-red-50 border border-red-300 rounded-lg p-4">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <p class="text-sm text-red-800">⚠️ Surat ini TIDAK SAH dan TIDAK DAPAT DIGUNAKAN untuk keperluan apapun.</p>
+                            <p class="text-sm text-red-800">Surat ini TIDAK SAH dan TIDAK DAPAT DIGUNAKAN untuk keperluan apapun.</p>
                         </div>
                     </div>
                 </div>
@@ -125,21 +134,21 @@
 
             <!-- Invalid State -->
             <div id="invalid-state" class="hidden">
-                <div class="bg-gradient-to-r from-gray-500 to-gray-700 p-8 text-white text-center">
-                    <svg class="w-20 h-20 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-gray-50 border-b-2 border-gray-500 p-6 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <h2 class="text-3xl font-bold">❌ SURAT TIDAK VALID</h2>
-                    <p class="text-gray-200 mt-2">Surat ini tidak terdaftar dalam database resmi</p>
+                    <h2 class="text-2xl font-bold text-gray-700">SURAT TIDAK VALID</h2>
+                    <p class="text-gray-600 mt-1 text-sm">Surat ini tidak terdaftar dalam database resmi</p>
                 </div>
                 <div class="p-6 text-center">
-                    <p class="text-gray-700" id="invalid-message">Surat tidak ditemukan dalam database resmi Desa Pongpongan.</p>
-                    <div class="mt-4 p-4 bg-red-50 rounded-xl">
+                    <p class="text-gray-700 mb-4" id="invalid-message">Surat tidak ditemukan dalam database resmi Desa Pongpongan.</p>
+                    <div class="bg-red-50 border border-red-300 rounded-lg p-4">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                             </svg>
-                            <p class="text-sm text-red-800">⚠️ Surat ini TIDAK SAH. Jangan gunakan untuk keperluan resmi. Laporkan kepada pihak desa jika menemukan surat ini.</p>
+                            <p class="text-sm text-red-800">Surat ini TIDAK SAH. Jangan gunakan untuk keperluan resmi. Laporkan kepada pihak desa jika menemukan surat ini.</p>
                         </div>
                     </div>
                 </div>
@@ -147,16 +156,16 @@
 
             <!-- Error State -->
             <div id="error-state" class="hidden">
-                <div class="bg-gradient-to-r from-orange-500 to-orange-700 p-8 text-white text-center">
-                    <svg class="w-20 h-20 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-orange-50 border-b-2 border-orange-500 p-6 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                     </svg>
-                    <h2 class="text-3xl font-bold">⚠️ GAGAL TERHUBUNG</h2>
-                    <p class="text-orange-100 mt-2">Tidak dapat terhubung ke server verifikasi</p>
+                    <h2 class="text-2xl font-bold text-orange-700">GAGAL TERHUBUNG</h2>
+                    <p class="text-orange-600 mt-1 text-sm">Tidak dapat terhubung ke server verifikasi</p>
                 </div>
                 <div class="p-6 text-center">
-                    <p class="text-gray-700" id="error-message">Terjadi kesalahan saat menghubungi server.</p>
-                    <div class="mt-4 p-4 bg-yellow-50 rounded-xl">
+                    <p class="text-gray-700 mb-4" id="error-message">Terjadi kesalahan saat menghubungi server.</p>
+                    <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-4">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -164,28 +173,39 @@
                             <p class="text-sm text-yellow-800">Silakan periksa koneksi internet Anda atau hubungi administrator desa.</p>
                         </div>
                     </div>
-                    <button onclick="window.location.reload()" class="mt-6 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition shadow-md">
+                    <button onclick="window.location.reload()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">
                         🔄 Coba Lagi
                     </button>
                 </div>
             </div>
 
-            <div class="p-4 bg-gray-50 text-center text-sm text-gray-600 border-t">
-                <p>SIPVMS - Sistem Informasi Surat Desa Pongpongan</p>
-                <p class="text-xs mt-1">Verifikasi Digital - Keaslian Surat Terjamin</p>
+            <!-- Footer -->
+            <div class="p-4 bg-gray-50 text-center text-xs text-gray-600 border-t">
+                <p class="font-semibold">SIPVMS - Sistem Informasi Surat Desa Pongpongan</p>
+                <p class="mt-1">Verifikasi Digital - Keaslian Surat Terjamin</p>
+                <p class="mt-2 text-gray-500">© 2026 Pemerintah Desa Pongpongan, Kab. Tuban</p>
             </div>
-        </div>
-
-        <div class="text-center mt-8">
-            <a href="/" class="inline-block px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all duration-300 shadow-lg">
-                ← Kembali ke Beranda
-            </a>
         </div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const suratId = urlParams.get('id');
+        
+        // Fungsi untuk mendapatkan waktu sekarang dalam format Indonesia
+        function getWaktuVerifikasiSekarang() {
+            const now = new Date();
+            return now.toLocaleString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'Asia/Jakarta'
+            }) + ' WIB';
+        }
         
         function showLoading() {
             document.getElementById('loading-state').classList.remove('hidden');
@@ -204,34 +224,46 @@
             document.getElementById('rejected-state').classList.add('hidden');
             document.getElementById('error-state').classList.add('hidden');
             
-            // Tampilkan data surat TANPA isi surat
             document.getElementById('valid-content').innerHTML = `
-                <div class="space-y-4">
-                    <div class="border-b pb-3">
-                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">📋 Nomor Surat</p>
-                        <p class="font-semibold text-gray-800 text-lg mt-1">${escapeHtml(data.nomor_surat) || '-'}</p>
+                <div class="space-y-4 text-sm">
+                    <div class="grid grid-cols-3 gap-2 pb-3 border-b border-gray-200">
+                        <div class="col-span-1 text-gray-500 font-medium">Nomor Surat</div>
+                        <div class="col-span-2 font-semibold text-gray-800">${escapeHtml(data.nomor_surat) || '-'}</div>
                     </div>
-                    <div class="border-b pb-3">
-                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">📑 Jenis Surat</p>
-                        <p class="text-gray-800 mt-1">${escapeHtml(data.jenis_surat) || '-'}</p>
+                    <div class="grid grid-cols-3 gap-2 pb-3 border-b border-gray-200">
+                        <div class="col-span-1 text-gray-500 font-medium">Jenis Surat</div>
+                        <div class="col-span-2 text-gray-800">${escapeHtml(data.jenis_surat) || '-'}</div>
                     </div>
-                    <div class="border-b pb-3">
-                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">👤 Pemohon / Penerima</p>
-                        <p class="text-gray-800 mt-1 font-medium">${escapeHtml(data.nama_pemohon) || '-'}</p>
+                    <div class="grid grid-cols-3 gap-2 pb-3 border-b border-gray-200">
+                        <div class="col-span-1 text-gray-500 font-medium">Pemohon</div>
+                        <div class="col-span-2 text-gray-800 font-medium">${escapeHtml(data.nama_pemohon) || '-'}</div>
                     </div>
-                    <div class="border-b pb-3">
-                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">📅 Tanggal Surat</p>
-                        <p class="text-gray-800 mt-1">${data.tanggal_surat ? new Date(data.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</p>
+                    <div class="grid grid-cols-3 gap-2 pb-3 border-b border-gray-200">
+                        <div class="col-span-1 text-gray-500 font-medium">Tanggal Surat</div>
+                        <div class="col-span-2 text-gray-800">${data.tanggal_surat ? new Date(data.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</div>
                     </div>
-                    <div class="border-b pb-3">
-                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">✅ Divalidasi Oleh</p>
-                        <p class="text-gray-800 mt-1">${escapeHtml(data.validator_name) || 'Petugas Desa'}</p>
+                    <div class="grid grid-cols-3 gap-2 pb-3 border-b border-gray-200">
+                        <div class="col-span-1 text-gray-500 font-medium">Divalidasi Oleh</div>
+                        <div class="col-span-2 text-gray-800">${escapeHtml(data.validator_name) || 'Petugas Desa'}</div>
                     </div>
-                    <div class="border-b pb-3">
-                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">📅 Tanggal Validasi</p>
-                        <p class="text-gray-800 mt-1">${data.tanggal_validasi ? new Date(data.tanggal_validasi).toLocaleString('id-ID') : '-'}</p>
+                    <div class="grid grid-cols-3 gap-2 pb-3 border-b border-gray-200">
+                        <div class="col-span-1 text-gray-500 font-medium">Tanggal Validasi</div>
+                        <div class="col-span-2 text-gray-800">${data.tanggal_validasi ? new Date(data.tanggal_validasi).toLocaleString('id-ID') : '-'}</div>
                     </div>
-                    <!-- Bagian isi surat dihapus sesuai permintaan -->
+                    <!-- ✅ TAMBAHAN: Waktu Verifikasi Sekarang -->
+                    <div class="grid grid-cols-3 gap-2 pb-3 border-b border-gray-200 bg-blue-50 -mx-6 px-6 py-3 border-l-4 border-blue-500">
+                        <div class="col-span-1 text-blue-700 font-semibold flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Waktu Verifikasi
+                        </div>
+                        <div class="col-span-2 text-blue-900 font-semibold">${getWaktuVerifikasiSekarang()}</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-1 text-gray-500 font-medium">Hash Verifikasi</div>
+                        <div class="col-span-2 text-gray-600 font-mono text-xs break-all">${suratId || '-'}</div>
+                    </div>
                 </div>
             `;
         }
@@ -287,13 +319,9 @@
                 return;
             }
             
-            console.log('🔍 Memverifikasi surat dengan ID:', suratId);
-            
             try {
                 const response = await fetch(`/api/surat/verify?id=${suratId}`);
                 const result = await response.json();
-                
-                console.log('📡 Hasil verifikasi:', result);
                 
                 if (result.success && result.data) {
                     const status = result.data.status_validasi;
@@ -317,11 +345,10 @@
                 
             } catch (error) {
                 console.error('❌ Error verifikasi:', error);
-                showError('Gagal terhubung ke server verifikasi. Silakan cek koneksi internet Anda.');
+                showError('Gagal terhubung ke server verifikasi.');
             }
         }
         
-        // Jalankan verifikasi
         showLoading();
         verifySurat();
     </script>

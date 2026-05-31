@@ -26,7 +26,10 @@ app.use(cors({
   credentials: true
 }));
 
-// Static files
+// ⭐️ TAMBAHAN INI: Serve static files dari root agar /logo-tuban.png bisa diakses
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Static files (existing - biarkan saja untuk kompatibilitas)
 app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
@@ -291,7 +294,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/verify', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'verify.html')); // Pastikan file ini ada jika perlu
+  res.sendFile(path.join(__dirname, 'views', 'verify.html'));
 });
 
 // ============ START SERVER ============
